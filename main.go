@@ -157,7 +157,7 @@ func withServerID(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// Manage CI/CD
+// Manage CI/CD for Repl
 
 type GithubRequ struct {
 	body   string
