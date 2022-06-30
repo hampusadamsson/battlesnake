@@ -81,8 +81,6 @@ func move(state GameState) BattlesnakeMoveResponse {
 		possibleMoves["up"] = false
 	}
 
-	log.Println(myHead, boardHeight, boardWidth)
-
 	// TODO: Step 2 - Don't hit yourself.
 	// Use information in GameState to prevent your Battlesnake from colliding with itself.
 	mybody := state.You.Body
@@ -164,6 +162,7 @@ func move(state GameState) BattlesnakeMoveResponse {
 	// 	nextMove = safeMoves[rand.Intn(len(safeMoves))]
 	// 	log.Printf("%s MOVE %d: %s\n", state.Game.ID, state.Turn, nextMove)
 	// }
+	log.Println(myHead, boardHeight, boardWidth, possibleMoves, preferedMove)
 	return BattlesnakeMoveResponse{
 		Move: preferedMove,
 	}
