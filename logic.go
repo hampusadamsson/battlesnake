@@ -7,7 +7,6 @@ package main
 
 import (
 	"log"
-	"math/rand"
 )
 
 // This function is called when you register your Battlesnake on play.battlesnake.com
@@ -147,24 +146,26 @@ func move(state GameState) BattlesnakeMoveResponse {
 
 	// Finally, choose a move from the available safe moves.
 	// TODO: Step 5 - Select a move to make based on strategy, rather than random.
-	var nextMove string
+	// var nextMove string
 
-	safeMoves := []string{}
-	for move, isSafe := range possibleMoves {
-		if isSafe {
-			safeMoves = append(safeMoves, move)
-		}
-	}
+	// nextMove = preferedMove
 
-	if len(safeMoves) == 0 {
-		nextMove = "down"
-		log.Printf("%s MOVE %d: No safe moves detected! Moving %s\n", state.Game.ID, state.Turn, nextMove)
-	} else {
-		nextMove = safeMoves[rand.Intn(len(safeMoves))]
-		log.Printf("%s MOVE %d: %s\n", state.Game.ID, state.Turn, nextMove)
-	}
+	// safeMoves := []string{}
+	// for move, isSafe := range possibleMoves {
+	// 	if isSafe {
+	// 		safeMoves = append(safeMoves, move)
+	// 	}
+	// }
+
+	// if len(safeMoves) == 0 {
+	// 	nextMove = "down"
+	// 	log.Printf("%s MOVE %d: No safe moves detected! Moving %s\n", state.Game.ID, state.Turn, nextMove)
+	// } else {
+	// 	nextMove = safeMoves[rand.Intn(len(safeMoves))]
+	// 	log.Printf("%s MOVE %d: %s\n", state.Game.ID, state.Turn, nextMove)
+	// }
 	return BattlesnakeMoveResponse{
-		Move: nextMove,
+		Move: preferedMove,
 	}
 }
 
