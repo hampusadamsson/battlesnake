@@ -7,7 +7,8 @@ package main
 
 import (
 	"log"
-	"math/rand"
+
+	"github.com/BattlesnakeOfficial/starter-snake-go/battlesnake"
 )
 
 // This function is called when you register your Battlesnake on play.battlesnake.com
@@ -29,159 +30,23 @@ func info() BattlesnakeInfoResponse {
 // This function is called everytime your Battlesnake is entered into a game.
 // The provided GameState contains information about the game that's about to be played.
 // It's purely for informational purposes, you don't have to make any decisions here.
-func start(state GameState) {
+func start(state battlesnake.GameState) {
 	log.Printf("%s START\n", state.Game.ID)
 }
 
 // This function is called when a game your Battlesnake was in has ended.
 // It's purely for informational purposes, you don't have to make any decisions here.
-func end(state GameState) {
+func end(state battlesnake.GameState) {
 	log.Printf("%s END\n\n", state.Game.ID)
 }
 
 // This function is called on every turn of a game. Use the provided GameState to decide
 // where to move -- valid moves are "up", "down", "left", or "right".
 // We've provided some code and comments to get you started.
-func move(state GameState) BattlesnakeMoveResponse {
-	var preferedMove string
-
-	possibleMoves := map[string]bool{
-		"up":    true,
-		"down":  true,
-		"left":  true,
-		"right": true,
-	}
-
-	// Step 0: Don't let your Battlesnake move back in on it's own neck
-	myHead := state.You.Body[0] // Coordinates of your head
-	myNeck := state.You.Body[1] // Coordinates of body piece directly behind your head (your "neck")
-	if myNeck.X < myHead.X {
-		possibleMoves["left"] = false
-	} else if myNeck.X > myHead.X {
-		possibleMoves["right"] = false
-	} else if myNeck.Y < myHead.Y {
-		possibleMoves["down"] = false
-	} else if myNeck.Y > myHead.Y {
-		possibleMoves["up"] = false
-	}
-
-	// TODO: Step 1 - Don't hit walls.
-	// Use information in GameState to prevent your Battlesnake from moving beyond the boundaries of the board.
-	boardWidth := state.Board.Width
-	boardHeight := state.Board.Height
-
-	if myHead.X == 0 {
-		possibleMoves["left"] = false
-	} else if myHead.X == boardWidth-1 {
-		possibleMoves["right"] = false
-	}
-
-	if myHead.Y == 0 {
-		possibleMoves["down"] = false
-	} else if myHead.Y == boardHeight-1 {
-		possibleMoves["up"] = false
-	}
-
-	// TODO: Step 2 - Don't hit yourself.
-	// Use information in GameState to prevent your Battlesnake from colliding with itself.
-	mybody := state.You.Body
-	for i := range mybody {
-		if mybody[i].X == myHead.X+1 && mybody[i].Y == myHead.Y {
-			possibleMoves["right"] = false
-		}
-		if mybody[i].X == myHead.X-1 && mybody[i].Y == myHead.Y {
-			possibleMoves["left"] = false
-		}
-		if mybody[i].X == myHead.X && mybody[i].Y == myHead.Y+1 {
-			possibleMoves["up"] = false
-		}
-		if mybody[i].X == myHead.X && mybody[i].Y == myHead.Y-1 {
-			possibleMoves["down"] = false
-		}
-	}
-
-	// TODO: Step 3 - Don't collide with others.
-	// Use information in GameState to prevent your Battlesnake from colliding with others.
-	for _, s := range state.Board.Snakes {
-		snake := s.Body
-		// myHead = s.Head
-		for i := range snake {
-			if snake[i].X == myHead.X+1 && snake[i].Y == myHead.Y {
-				possibleMoves["right"] = false
-			}
-			if snake[i].X == myHead.X-1 && snake[i].Y == myHead.Y {
-				possibleMoves["left"] = false
-			}
-			if snake[i].X == myHead.X && snake[i].Y == myHead.Y+1 {
-				possibleMoves["up"] = false
-			}
-			if snake[i].X == myHead.X && snake[i].Y == myHead.Y-1 {
-				possibleMoves["down"] = false
-			}
-		}
-	}
-	// TODO: Step 4 - Find food.
-	// Use information in GameState to seek out and find food.
-	var nearestFood Coord
-	distance := 999999
-	for _, c := range state.Board.Food {
-		dist := manhatanDistanceBetween(myHead, c)
-		if dist < distance {
-			nearestFood = c
-			distance = dist
-		}
-	}
-	if &nearestFood != nil {
-		if myHead.X < nearestFood.X && possibleMoves["right"] == true {
-			preferedMove = "right"
-		} else if myHead.X > nearestFood.X && possibleMoves["left"] == true {
-			preferedMove = "left"
-		} else if myHead.Y < nearestFood.Y && possibleMoves["up"] == true {
-			preferedMove = "up"
-		} else if myHead.Y > nearestFood.Y && possibleMoves["down"] == true {
-			preferedMove = "down"
-		}
-	}
-
-	// Finally, choose a move from the available safe moves.
-	// TODO: Step 5 - Select a move to make based on strategy, rather than random.
-
-	if preferedMove == "" {
-		var nextMove string
-
-		// nextMove = preferedMove
-
-		safeMoves := []string{}
-		for move, isSafe := range possibleMoves {
-			if isSafe {
-				safeMoves = append(safeMoves, move)
-			}
-		}
-
-		if len(safeMoves) == 0 {
-			nextMove = "down"
-			log.Printf("%s MOVE %d: No safe moves detected! Moving %s\n", state.Game.ID, state.Turn, nextMove)
-		} else {
-			nextMove = safeMoves[rand.Intn(len(safeMoves))]
-			log.Printf("%s MOVE %d: %s\n", state.Game.ID, state.Turn, nextMove)
-		}
-		// Randomizing
-		preferedMove = nextMove
-	}
-
-	log.Println(myHead, boardHeight, boardWidth, possibleMoves, preferedMove)
+func move(state battlesnake.GameState) BattlesnakeMoveResponse {
+	s := battlesnake.Snake{state, "", true, true, true, true}
+	s.Calc()
 	return BattlesnakeMoveResponse{
-		Move: preferedMove,
+		Move: s.PreferedMove,
 	}
-}
-
-func manhatanDistanceBetween(from Coord, to Coord) int {
-	return abs(from.X-to.X) + abs(from.Y-to.Y)
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }

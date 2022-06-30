@@ -1,19 +1,28 @@
 package main
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/BattlesnakeOfficial/starter-snake-go/battlesnake"
 )
+
+func TestEmpty(t *testing.T) {
+	var tt string
+	fmt.Println(tt)
+	fmt.Println(tt == "")
+}
 
 func TestNeckAvoidance(t *testing.T) {
 	// Arrange
-	me := Battlesnake{
+	me := battlesnake.Battlesnake{
 		// Length 3, facing right
-		Head: Coord{X: 2, Y: 0},
-		Body: []Coord{{X: 2, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: 0}},
+		Head: battlesnake.Coord{X: 2, Y: 0},
+		Body: []battlesnake.Coord{{X: 2, Y: 0}, {X: 1, Y: 0}, {X: 0, Y: 0}},
 	}
-	state := GameState{
-		Board: Board{
-			Snakes: []Battlesnake{me},
+	state := battlesnake.GameState{
+		Board: battlesnake.Board{
+			Snakes: []battlesnake.Battlesnake{me},
 		},
 		You: me,
 	}
