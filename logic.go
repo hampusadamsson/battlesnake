@@ -43,6 +43,8 @@ func end(state GameState) {
 // where to move -- valid moves are "up", "down", "left", or "right".
 // We've provided some code and comments to get you started.
 func move(state GameState) BattlesnakeMoveResponse {
+	preferedMove := "right"
+
 	possibleMoves := map[string]bool{
 		"up":    true,
 		"down":  true,
@@ -122,6 +124,26 @@ func move(state GameState) BattlesnakeMoveResponse {
 	}
 	// TODO: Step 4 - Find food.
 	// Use information in GameState to seek out and find food.
+	var nearestFood Coord
+	distance := 999999
+	for _, c := range state.Board.Food {
+		dist := manhatanDistanceBetween(myHead, c)
+		if dist < distance {
+			nearestFood = c
+			distance = dist
+		}
+	}
+	if &nearestFood != nil {
+		if myHead.X > nearestFood.X && possibleMoves["right"] == true {
+			preferedMove = "right"
+		} else if myHead.X < nearestFood.X && possibleMoves["left"] == true {
+			preferedMove = "left"
+		} else if myHead.Y < nearestFood.Y && possibleMoves["up"] == true {
+			preferedMove = "up"
+		} else {
+			preferedMove = "down"
+		}
+	}
 
 	// Finally, choose a move from the available safe moves.
 	// TODO: Step 5 - Select a move to make based on strategy, rather than random.
@@ -144,4 +166,15 @@ func move(state GameState) BattlesnakeMoveResponse {
 	return BattlesnakeMoveResponse{
 		Move: nextMove,
 	}
+}
+
+func manhatanDistanceBetween(from Coord, to Coord) int {
+	return abs(from.X-to.X) + abs(from.Y-to.Y)
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
