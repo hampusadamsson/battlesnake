@@ -1,2 +1,2 @@
 language = "go"
-run = "./repl.deploy fuser -k 8080/tcp;go run main.go logic.go"
+run = "./repl.deploy go run main.go logic.go"
