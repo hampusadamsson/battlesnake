@@ -7,6 +7,7 @@ package main
 
 import (
 	"log"
+	"math/rand"
 )
 
 // This function is called when you register your Battlesnake on play.battlesnake.com
@@ -42,7 +43,7 @@ func end(state GameState) {
 // where to move -- valid moves are "up", "down", "left", or "right".
 // We've provided some code and comments to get you started.
 func move(state GameState) BattlesnakeMoveResponse {
-	preferedMove := "right"
+	var preferedMove string
 
 	possibleMoves := map[string]bool{
 		"up":    true,
@@ -137,31 +138,37 @@ func move(state GameState) BattlesnakeMoveResponse {
 			preferedMove = "left"
 		} else if myHead.Y < nearestFood.Y && possibleMoves["up"] == true {
 			preferedMove = "up"
-		} else {
+		} else if myHead.Y > nearestFood.Y && possibleMoves["down"] == true {
 			preferedMove = "down"
 		}
 	}
 
 	// Finally, choose a move from the available safe moves.
 	// TODO: Step 5 - Select a move to make based on strategy, rather than random.
-	// var nextMove string
 
-	// nextMove = preferedMove
+	if &preferedMove == nil {
+		var nextMove string
 
-	// safeMoves := []string{}
-	// for move, isSafe := range possibleMoves {
-	// 	if isSafe {
-	// 		safeMoves = append(safeMoves, move)
-	// 	}
-	// }
+		// nextMove = preferedMove
 
-	// if len(safeMoves) == 0 {
-	// 	nextMove = "down"
-	// 	log.Printf("%s MOVE %d: No safe moves detected! Moving %s\n", state.Game.ID, state.Turn, nextMove)
-	// } else {
-	// 	nextMove = safeMoves[rand.Intn(len(safeMoves))]
-	// 	log.Printf("%s MOVE %d: %s\n", state.Game.ID, state.Turn, nextMove)
-	// }
+		safeMoves := []string{}
+		for move, isSafe := range possibleMoves {
+			if isSafe {
+				safeMoves = append(safeMoves, move)
+			}
+		}
+
+		if len(safeMoves) == 0 {
+			nextMove = "down"
+			log.Printf("%s MOVE %d: No safe moves detected! Moving %s\n", state.Game.ID, state.Turn, nextMove)
+		} else {
+			nextMove = safeMoves[rand.Intn(len(safeMoves))]
+			log.Printf("%s MOVE %d: %s\n", state.Game.ID, state.Turn, nextMove)
+		}
+		// Randomizing
+		preferedMove = nextMove
+	}
+
 	log.Println(myHead, boardHeight, boardWidth, possibleMoves, preferedMove)
 	return BattlesnakeMoveResponse{
 		Move: preferedMove,
