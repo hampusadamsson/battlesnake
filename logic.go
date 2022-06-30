@@ -104,7 +104,7 @@ func move(state GameState) BattlesnakeMoveResponse {
 	// Use information in GameState to prevent your Battlesnake from colliding with others.
 	for _, s := range state.Board.Snakes {
 		snake := s.Body
-		myHead = s.Head
+		// myHead = s.Head
 		for i := range snake {
 			if snake[i].X == myHead.X+1 && snake[i].Y == myHead.Y {
 				possibleMoves["right"] = false
