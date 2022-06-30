@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -165,15 +166,21 @@ type GithubRequ struct {
 }
 
 func replCiCd(w http.ResponseWriter, r *http.Request) {
-	data := GithubRequ{}
-	err := json.NewDecoder(r.Body).Decode(&data)
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("ERROR: Failed to decode end json, %s", err)
-		return
+		panic(err)
 	}
-	log.Println(data)
-	log.Println(r.Body)
-	fmt.Println("repl.deploy" + data.Body + r.Header.Get("Signature"))
+	log.Println(string(body))
+
+	// data := GithubRequ{}
+	// err := json.NewDecoder(r.Body).Decode(&data)
+	// if err != nil {
+	// 	log.Printf("ERROR: Failed to decode end json, %s", err)
+	// 	return
+	// }
+	// log.Println(data)
+	// log.Println(r.Body)
+	fmt.Println("repl.deploy" + string(body) + r.Header.Get("Signature"))
 	fmt.Println("repl.deploy-success")
 }
 
