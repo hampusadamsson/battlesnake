@@ -1,2 +1,2 @@
 language = "go"
-run = "go run main.go logic.go"
+run = "run="./repl.deploy go run main.go logic.go"
