@@ -84,7 +84,21 @@ func move(state GameState) BattlesnakeMoveResponse {
 
 	// TODO: Step 2 - Don't hit yourself.
 	// Use information in GameState to prevent your Battlesnake from colliding with itself.
-	// mybody := state.You.Body
+	mybody := state.You.Body
+	for i := range mybody {
+		if mybody[i].X == myHead.X+1 && mybody[i].Y == myHead.Y {
+			possibleMoves["left"] = false
+		}
+		if mybody[i].X == myHead.X-1 && mybody[i].Y == myHead.Y {
+			possibleMoves["right"] = false
+		}
+		if mybody[i].X == myHead.X && mybody[i].Y == myHead.Y+1 {
+			possibleMoves["down"] = false
+		}
+		if mybody[i].X == myHead.X && mybody[i].Y == myHead.Y-1 {
+			possibleMoves["up"] = false
+		}
+	}
 
 	// TODO: Step 3 - Don't collide with others.
 	// Use information in GameState to prevent your Battlesnake from colliding with others.
