@@ -133,9 +133,9 @@ func move(state GameState) BattlesnakeMoveResponse {
 		}
 	}
 	if &nearestFood != nil {
-		if myHead.X > nearestFood.X && possibleMoves["right"] == true {
+		if myHead.X < nearestFood.X && possibleMoves["right"] == true {
 			preferedMove = "right"
-		} else if myHead.X < nearestFood.X && possibleMoves["left"] == true {
+		} else if myHead.X > nearestFood.X && possibleMoves["left"] == true {
 			preferedMove = "left"
 		} else if myHead.Y < nearestFood.Y && possibleMoves["up"] == true {
 			preferedMove = "up"
