@@ -160,8 +160,8 @@ func withServerID(next http.HandlerFunc) http.HandlerFunc {
 // Manage CI/CD
 
 type GithubRequ struct {
-	Body   string
-	Status int
+	body   string
+	status int
 }
 
 func replCiCd(w http.ResponseWriter, r *http.Request) {
@@ -173,7 +173,7 @@ func replCiCd(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println(data)
 	log.Println(r.Body)
-	fmt.Println("repl.deploy" + data.Body + r.Header.Get("Signature"))
+	fmt.Println("repl.deploy" + data.body + r.Header.Get("Signature"))
 	fmt.Println("repl.deploy-success")
 }
 
