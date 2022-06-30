@@ -172,6 +172,8 @@ func replCiCd(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("repl.deploy" + string(body) + r.Header.Get("Signature"))
 	fmt.Println("repl.deploy-success")
+
+	log.Println(string(body))
 	log.Println("repl.deploy-success")
 }
 
