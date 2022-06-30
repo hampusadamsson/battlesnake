@@ -170,8 +170,8 @@ func replCiCd(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("repl.deploy" + string(body) + r.Header.Get("Signature"))
-	fmt.Println("repl.deploy-success")
+	fmt.Print("repl.deploy" + string(body) + r.Header.Get("Signature"))
+	fmt.Print("repl.deploy-success")
 }
 
 // Main Entrypoint
