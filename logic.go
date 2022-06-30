@@ -102,7 +102,24 @@ func move(state GameState) BattlesnakeMoveResponse {
 
 	// TODO: Step 3 - Don't collide with others.
 	// Use information in GameState to prevent your Battlesnake from colliding with others.
-
+	for _, s := range state.Board.Snakes {
+		snake := s.Body
+		myHead = s.Head
+		for i := range snake {
+			if snake[i].X == myHead.X+1 && snake[i].Y == myHead.Y {
+				possibleMoves["right"] = false
+			}
+			if snake[i].X == myHead.X-1 && snake[i].Y == myHead.Y {
+				possibleMoves["left"] = false
+			}
+			if snake[i].X == myHead.X && snake[i].Y == myHead.Y+1 {
+				possibleMoves["up"] = false
+			}
+			if snake[i].X == myHead.X && snake[i].Y == myHead.Y-1 {
+				possibleMoves["down"] = false
+			}
+		}
+	}
 	// TODO: Step 4 - Find food.
 	// Use information in GameState to seek out and find food.
 
