@@ -75,9 +75,9 @@ func move(state GameState) BattlesnakeMoveResponse {
 	}
 
 	if myHead.Y == 0 {
-		possibleMoves["up"] = false
-	} else if myHead.Y == boardHeight-1 {
 		possibleMoves["down"] = false
+	} else if myHead.Y == boardHeight-1 {
+		possibleMoves["up"] = false
 	}
 
 	log.Println(myHead, boardHeight, boardWidth)
