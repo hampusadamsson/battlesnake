@@ -178,7 +178,6 @@ func replCiCd(w http.ResponseWriter, r *http.Request) {
 }
 
 // Main Entrypoint
-
 func main() {
 	port := os.Getenv("PORT")
 	if len(port) == 0 {
