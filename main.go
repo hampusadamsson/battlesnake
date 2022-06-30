@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -156,6 +158,24 @@ func withServerID(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// Manage CiCd
+
+func replCiCd(w http.ResponseWriter, r *http.Request) {
+	var (
+		response     *http.Response
+		err          error
+		responseData []byte
+	)
+
+	if responseData, err = ioutil.ReadAll(response.Body); err != nil {
+		log.Fatal(err)
+	}
+	ret := string(responseData)
+	fmt.Println(ret)
+
+	fmt.Println("repl.deploy-success")
+}
+
 // Main Entrypoint
 
 func main() {
@@ -165,6 +185,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", withServerID(HandleIndex))
+	http.HandleFunc("/refresh", withServerID(replCiCd))
 	http.HandleFunc("/start", withServerID(HandleStart))
 	http.HandleFunc("/move", withServerID(HandleMove))
 	http.HandleFunc("/end", withServerID(HandleEnd))
