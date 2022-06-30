@@ -87,16 +87,16 @@ func move(state GameState) BattlesnakeMoveResponse {
 	mybody := state.You.Body
 	for i := range mybody {
 		if mybody[i].X == myHead.X+1 && mybody[i].Y == myHead.Y {
-			possibleMoves["left"] = false
-		}
-		if mybody[i].X == myHead.X-1 && mybody[i].Y == myHead.Y {
 			possibleMoves["right"] = false
 		}
+		if mybody[i].X == myHead.X-1 && mybody[i].Y == myHead.Y {
+			possibleMoves["left"] = false
+		}
 		if mybody[i].X == myHead.X && mybody[i].Y == myHead.Y+1 {
-			possibleMoves["down"] = false
+			possibleMoves["up"] = false
 		}
 		if mybody[i].X == myHead.X && mybody[i].Y == myHead.Y-1 {
-			possibleMoves["up"] = false
+			possibleMoves["down"] = false
 		}
 	}
 
