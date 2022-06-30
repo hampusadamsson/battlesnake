@@ -170,16 +170,6 @@ func replCiCd(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	log.Println(string(body))
-
-	// data := GithubRequ{}
-	// err := json.NewDecoder(r.Body).Decode(&data)
-	// if err != nil {
-	// 	log.Printf("ERROR: Failed to decode end json, %s", err)
-	// 	return
-	// }
-	// log.Println(data)
-	// log.Println(r.Body)
 	fmt.Println("repl.deploy" + string(body) + r.Header.Get("Signature"))
 	fmt.Println("repl.deploy-success")
 }

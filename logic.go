@@ -18,7 +18,7 @@ import (
 func info() BattlesnakeInfoResponse {
 	log.Println("INFO")
 	return BattlesnakeInfoResponse{
-		APIVersion: "1.5",
+		APIVersion: "1.6",
 		Author:     "Majestic cat", // TODO: Your Battlesnake username
 		Color:      "#9F2B68",      // TODO: Personalize
 		Head:       "default",      // TODO: Personalize
