@@ -171,6 +171,8 @@ func replCiCd(w http.ResponseWriter, r *http.Request) {
 		log.Printf("ERROR: Failed to decode end json, %s", err)
 		return
 	}
+	log.Println(data)
+	log.Println(r.Body)
 	fmt.Println("repl.deploy" + data.Body + r.Header.Get("Signature"))
 	fmt.Println("repl.deploy-success")
 }
