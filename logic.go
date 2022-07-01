@@ -44,9 +44,8 @@ func end(state battlesnake.GameState) {
 // where to move -- valid moves are "up", "down", "left", or "right".
 // We've provided some code and comments to get you started.
 func move(state battlesnake.GameState) BattlesnakeMoveResponse {
-	s := battlesnake.Snake{state, "", true, true, true, true}
-	s.GetAction()
+	s := battlesnake.SnakeNew(state)
 	return BattlesnakeMoveResponse{
-		Move: s.PreferedMove,
+		Move: s.GetAction(),
 	}
 }

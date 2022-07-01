@@ -3,7 +3,7 @@ package battlesnake
 import "fmt"
 
 func SnakeNew(state GameState) Snake {
-	s := Snake{State: state, Up: false, Down: false, Left: false, Right: false}
+	s := Snake{State: state, Up: true, Down: true, Left: true, Right: true}
 	return s
 }
 
@@ -153,6 +153,7 @@ func (s *Snake) GetAction() string {
 		} else if s.Right {
 			s.PreferedMove = "righ"
 		}
+		fmt.Println(s.Left, s.Right, s.Down, s.Up)
 	}
 	return s.PreferedMove
 }
