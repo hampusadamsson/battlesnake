@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/BattlesnakeOfficial/starter-snake-go/battlesnake"
 )
@@ -116,6 +117,15 @@ func replCiCd(w http.ResponseWriter, r *http.Request) {
 
 // Main Entrypoint
 func main() {
+
+	go func() {
+		for {
+			time.Sleep(time.Second * 5)
+			log.Println("Stay awake...")
+			http.Get("https://battlesnake.adamssonhampus.repl.co")
+		}
+	}()
+
 	port := os.Getenv("PORT")
 	if len(port) == 0 {
 		port = "8080"
