@@ -183,7 +183,7 @@ func (s *Snake) GetAction() string {
 	safeMove, dirFreeSpace := s.findOpenSpace(7)
 
 	if eatMove != "" {
-		if s.State.You.Health < 20 && dirFreeSpace[eatMove] > 20 {
+		if s.State.You.Health < 40 && dirFreeSpace[eatMove] > 20 {
 			s.PreferedMove = eatMove
 		} else {
 			s.PreferedMove = safeMove
