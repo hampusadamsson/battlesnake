@@ -50,28 +50,26 @@ type Board struct {
 
 func (b *Board) isOckupied(c Coord) bool {
 	if c.Y < 0 {
-		// fmt.Println("wall 1", c)
 		return true
 	}
 	if c.Y == b.Height {
-		// fmt.Println("wall 2", c)
 		return true
 	}
 	if c.X < 0 {
-		// fmt.Println("wall 3", c)
 		return true
 	}
 	if c.X == b.Width {
-		// fmt.Println("wall 4", c)
 		return true
 	}
 	for i := range b.Snakes {
 		if b.Snakes[i].isOckupiedBySnake(c) {
-			// fmt.Println("Snake there", b.Snakes[i], c)
+			return true
+		}
+		expectedCoord := b.Snakes[i].expectedSnakeNextMove() // Probability
+		if expectedCoord.X == c.X && expectedCoord.Y == c.Y {
 			return true
 		}
 	}
-	// fmt.Println("OK", c)
 	return false
 }
 
@@ -86,6 +84,22 @@ func (s *Battlesnake) isOckupiedBySnake(c Coord) bool {
 		}
 	}
 	return false
+}
+
+func (s *Battlesnake) expectedSnakeNextMove() Coord {
+	myNeck := s.Body[1]
+	myHead := s.Body[0]
+	if myNeck.X < myHead.X {
+		return myHead.righ()
+	} else if myNeck.X > myHead.X {
+		return myHead.left()
+	} else if myNeck.Y < myHead.Y {
+		return myHead.up()
+	} else if myNeck.Y > myHead.Y {
+		return myHead.down()
+	} else {
+		panic("Error")
+	}
 }
 
 type Battlesnake struct {
