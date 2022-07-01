@@ -48,6 +48,40 @@ type Board struct {
 	Hazards []Coord `json:"hazards"`
 }
 
+func (b *Board) isOckupied(c Coord) bool {
+	if c.Y < 0 {
+		return true
+	}
+	if c.Y == b.Height {
+		return true
+	}
+	if c.X < 0 {
+		return true
+	}
+	if c.X == b.Width {
+		return true
+	}
+	for i := range b.Snakes {
+		if b.Snakes[i].isOckupiedBySnake(c) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Battlesnake) isOckupiedBySnake(c Coord) bool {
+	mybody := s.Body
+	if s.Head.X == c.X && s.Head.Y == c.Y {
+		return true
+	}
+	for i := range s.Body {
+		if mybody[i].X == c.X && mybody[i].Y == c.Y {
+			return true
+		}
+	}
+	return false
+}
+
 type Battlesnake struct {
 	ID      string  `json:"id"`
 	Name    string  `json:"name"`
@@ -65,4 +99,20 @@ type Battlesnake struct {
 type Coord struct {
 	X int `json:"x"`
 	Y int `json:"y"`
+}
+
+func (c *Coord) left() Coord {
+	return Coord{c.X - 1, c.Y}
+}
+
+func (c *Coord) righ() Coord {
+	return Coord{c.X + 1, c.Y}
+}
+
+func (c *Coord) up() Coord {
+	return Coord{c.X, c.Y + 1}
+}
+
+func (c *Coord) down() Coord {
+	return Coord{c.X, c.Y - 1}
 }

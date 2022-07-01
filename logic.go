@@ -45,7 +45,7 @@ func end(state battlesnake.GameState) {
 // We've provided some code and comments to get you started.
 func move(state battlesnake.GameState) BattlesnakeMoveResponse {
 	s := battlesnake.Snake{state, "", true, true, true, true}
-	s.Calc()
+	s.GetAction()
 	return BattlesnakeMoveResponse{
 		Move: s.PreferedMove,
 	}
