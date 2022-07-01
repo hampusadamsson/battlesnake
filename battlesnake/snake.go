@@ -151,7 +151,7 @@ func (s *Snake) GetAction() string {
 		} else if s.Left {
 			s.PreferedMove = "left"
 		} else if s.Right {
-			s.PreferedMove = "righ"
+			s.PreferedMove = "right"
 		}
 		fmt.Println(s.Left, s.Right, s.Down, s.Up, s.PreferedMove)
 	}
