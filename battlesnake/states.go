@@ -1,7 +1,5 @@
 package battlesnake
 
-import "fmt"
-
 type GameState struct {
 	Game  Game        `json:"game"`
 	Turn  int         `json:"turn"`
@@ -52,28 +50,28 @@ type Board struct {
 
 func (b *Board) isOckupied(c Coord) bool {
 	if c.Y < 0 {
-		fmt.Println("wall 1", c)
+		// fmt.Println("wall 1", c)
 		return true
 	}
 	if c.Y == b.Height {
-		fmt.Println("wall 2", c)
+		// fmt.Println("wall 2", c)
 		return true
 	}
 	if c.X < 0 {
-		fmt.Println("wall 3", c)
+		// fmt.Println("wall 3", c)
 		return true
 	}
 	if c.X == b.Width {
-		fmt.Println("wall 4", c)
+		// fmt.Println("wall 4", c)
 		return true
 	}
 	for i := range b.Snakes {
 		if b.Snakes[i].isOckupiedBySnake(c) {
-			fmt.Println("Snake there", b.Snakes[i], c)
+			// fmt.Println("Snake there", b.Snakes[i], c)
 			return true
 		}
 	}
-	fmt.Println("OK", c)
+	// fmt.Println("OK", c)
 	return false
 }
 
