@@ -60,6 +60,11 @@ func (b *Board) isOckupied(c Coord) bool {
 	if c.X == b.Width {
 		return true
 	}
+	for i := range b.Hazards {
+		if b.Hazards[i] == c {
+			return true
+		}
+	}
 	for i := range b.Snakes {
 		if b.Snakes[i].isOckupiedBySnake(c) {
 			return true
