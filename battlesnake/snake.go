@@ -6,6 +6,13 @@ import (
 )
 
 func SnakeNew(state GameState) Snake {
+	for i := range state.Board.Snakes {
+		s := state.Board.Snakes[i].Head
+		you := state.You.Head
+		if s == you {
+			state.Board.Snakes[i].IsYou = true
+		}
+	}
 	s := Snake{State: state, Up: true, Down: true, Left: true, Right: true}
 	return s
 }

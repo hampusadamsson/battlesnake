@@ -43,7 +43,6 @@ type Board struct {
 	Width  int           `json:"width"`
 	Food   []Coord       `json:"food"`
 	Snakes []Battlesnake `json:"snakes"`
-
 	// Used in non-standard game modes
 	Hazards []Coord `json:"hazards"`
 }
@@ -65,9 +64,11 @@ func (b *Board) isOckupied(c Coord) bool {
 		if b.Snakes[i].isOckupiedBySnake(c) {
 			return true
 		}
-		expectedCoord := b.Snakes[i].expectedSnakeNextMove() // Probability
-		if expectedCoord.X == c.X && expectedCoord.Y == c.Y {
-			return true
+		if !b.Snakes[i].IsYou {
+			expectedCoord := b.Snakes[i].expectedSnakeNextMove()
+			if expectedCoord.X == c.X && expectedCoord.Y == c.Y {
+				return true
+			}
 		}
 	}
 	return false
@@ -110,7 +111,7 @@ type Battlesnake struct {
 	Head    Coord   `json:"head"`
 	Length  int32   `json:"length"`
 	Latency string  `json:"latency"`
-
+	IsYou   bool
 	// Used in non-standard game modes
 	Shout string `json:"shout"`
 	Squad string `json:"squad"`
