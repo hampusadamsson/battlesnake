@@ -91,7 +91,7 @@ func (s *Battlesnake) isOckupiedBySnake(c Coord) bool {
 type Battlesnake struct {
 	ID      string  `json:"id"`
 	Name    string  `json:"name"`
-	Health  int32   `json:"health"`
+	Health  int     `json:"health"`
 	Body    []Coord `json:"body"`
 	Head    Coord   `json:"head"`
 	Length  int32   `json:"length"`
@@ -121,4 +121,13 @@ func (c *Coord) up() Coord {
 
 func (c *Coord) down() Coord {
 	return Coord{c.X, c.Y - 1}
+}
+
+func (c *Coord) adjacent() []Coord {
+	return []Coord{
+		c.down(),
+		c.up(),
+		c.left(),
+		c.righ(),
+	}
 }

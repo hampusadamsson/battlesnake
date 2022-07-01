@@ -1,5 +1,10 @@
 package battlesnake
 
+import (
+	"fmt"
+	"sort"
+)
+
 func SnakeNew(state GameState) Snake {
 	s := Snake{State: state, Up: true, Down: true, Left: true, Right: true}
 	return s
@@ -70,7 +75,7 @@ type Snake struct {
 // 	}
 // }
 
-func (s *Snake) findFood() {
+func (s *Snake) findFood() string {
 	myHead := s.State.You.Body[0]
 	var nearestFood Coord
 	distance := 999999
@@ -83,20 +88,54 @@ func (s *Snake) findFood() {
 	}
 	if &nearestFood != nil {
 		if myHead.X < nearestFood.X && s.Right == true {
-			s.PreferedMove = "right"
+			return "right"
 		} else if myHead.X > nearestFood.X && s.Left == true {
-			s.PreferedMove = "left"
+			return "left"
 		} else if myHead.Y < nearestFood.Y && s.Up == true {
-			s.PreferedMove = "up"
+			return "up"
 		} else if myHead.Y > nearestFood.Y && s.Down == true {
-			s.PreferedMove = "down"
+			return "down"
 		}
 	}
+	return ""
+}
+func (s *Snake) possibleFutureMoves(c Coord, depth int) int {
+	if s.State.Board.isOckupied(c) {
+		return 0
+	}
+	if depth < 0 {
+		return 1
+	}
+	cc := 0
+	adjacent := c.adjacent()
+	for i := range adjacent {
+		if !s.State.Board.isOckupied(adjacent[i]) {
+			cc += s.possibleFutureMoves(adjacent[i], depth-1)
+		}
+	}
+	return cc
 }
 
-func (s *Snake) findOpenSpace(c Coord) {
-	m := make(map[Coord]int)
-	m[c] = 1
+func (s *Snake) findOpenSpace(depth int) (string, map[string]int) {
+	c := s.State.You.Head
+
+	m := make(map[string]int)
+	m["left"] = s.possibleFutureMoves(c.left(), depth)
+	m["right"] = s.possibleFutureMoves(c.righ(), depth)
+	m["up"] = s.possibleFutureMoves(c.up(), depth)
+	m["down"] = s.possibleFutureMoves(c.down(), depth)
+
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+
+	sort.SliceStable(keys, func(i, j int) bool {
+		return m[keys[i]] > m[keys[j]]
+	})
+
+	fmt.Println(c, keys[0], keys, m)
+	return keys[0], m
 }
 
 func (s *Snake) GetAction() string {
@@ -133,9 +172,19 @@ func (s *Snake) GetAction() string {
 
 	// TODO: Step 4 - Find food.
 	// Use information in GameState to seek out and find food.
-	s.findFood()
+	eatMove := s.findFood()
+	safeMove, dirFreeSpace := s.findOpenSpace(7)
 
-	s.findOpenSpace(Coord{0, 0})
+	if eatMove != "" {
+		if s.State.You.Health < 20 && dirFreeSpace[eatMove] > 20 {
+			s.PreferedMove = eatMove
+		} else {
+			s.PreferedMove = safeMove
+		}
+	} else {
+		s.PreferedMove = safeMove
+	}
+	// fmt.Println(s.PreferedMove)
 
 	// Finally, choose a move from the available safe moves.
 	// TODO: Step 5 - Select a move to make based on strategy, rather than random.
