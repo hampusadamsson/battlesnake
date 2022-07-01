@@ -104,7 +104,8 @@ func (s *Battlesnake) expectedSnakeNextMove() Coord {
 	} else if myNeck.Y > myHead.Y {
 		return myHead.down()
 	} else {
-		panic("Error")
+		return myHead
+		//panic("Error")
 	}
 }
 
