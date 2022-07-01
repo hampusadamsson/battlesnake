@@ -1,5 +1,7 @@
 package battlesnake
 
+import "fmt"
+
 func SnakeNew(state GameState) Snake {
 	s := Snake{State: state, Up: false, Down: false, Left: false, Right: false}
 	return s
@@ -140,6 +142,7 @@ func (s *Snake) GetAction() string {
 	// Finally, choose a move from the available safe moves.
 	// TODO: Step 5 - Select a move to make based on strategy, rather than random.
 
+	fmt.Println("PREF", s.PreferedMove)
 	if s.PreferedMove == "" {
 		if s.Down {
 			s.PreferedMove = "down"
