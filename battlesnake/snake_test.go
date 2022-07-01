@@ -18,5 +18,5 @@ func TestNeckAvoidance(t *testing.T) {
 		You: me,
 	}
 	s := SnakeNew(state)
-	s.findOpenSpace()
+	s.findOpenSpace(Coord{2, 2})
 }
