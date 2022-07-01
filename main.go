@@ -120,7 +120,7 @@ func main() {
 
 	go func() {
 		for {
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * 60)
 			log.Println("Stay awake...")
 			http.Get("https://battlesnake.adamssonhampus.repl.co")
 		}
