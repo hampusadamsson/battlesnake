@@ -193,7 +193,7 @@ func (s *Snake) GetAction() string {
 	keys := []string{"left", "right", "up", "down"}
 	composite := make(map[string]int)
 	for _, v := range keys {
-		composite[v] = dirFreeSpace[v] + maxLimitPerDirection[v]*3
+		composite[v] = dirFreeSpace[v] + maxLimitPerDirection[v]*2
 	}
 	sort.SliceStable(keys, func(i, j int) bool {
 		return composite[keys[i]] > composite[keys[j]]
