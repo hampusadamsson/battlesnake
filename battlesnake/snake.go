@@ -163,6 +163,15 @@ func (s *Snake) findOpenSpace(c Coord, depth int) (string, map[string]int) {
 	return keys[0], m
 }
 
+func (s *Snake) getMostCenteringMove() map[string]int {
+	m := make(map[string]int)
+	m["left"] = abs(s.State.You.Head.X - 1 - s.State.Board.Width)
+	m["right"] = abs(s.State.You.Head.X + 1 - s.State.Board.Width)
+	m["up"] = abs(s.State.You.Head.Y - 1 - s.State.Board.Height)
+	m["down"] = abs(s.State.You.Head.Y - 1 - s.State.Board.Height)
+	return m
+}
+
 func (s *Snake) youHaveMostLife() bool {
 	for i := range s.State.Board.Snakes {
 		if !s.State.Board.Snakes[i].IsYou && len(s.State.Board.Snakes[i].Body) >= len(s.State.You.Body) {
@@ -194,6 +203,9 @@ func (s *Snake) GetAction() string {
 	// Find best direction
 	safeMove, dirFreeSpace := s.findOpenSpace(s.State.You.Head, 7)
 
+	// strive for center
+	mostCenterMoves := s.getMostCenteringMove()
+
 	// Find best destruction move
 	_, _, maxLimitPerDirection := s.findMostLimitingMove(s.State.You.Head, 7)
 	// fmt.Println("DESTRUCTION:", limitingMove, limitingFactor)
@@ -202,7 +214,7 @@ func (s *Snake) GetAction() string {
 	keys := []string{"left", "right", "up", "down"}
 	composite := make(map[string]int)
 	for _, v := range keys {
-		composite[v] = dirFreeSpace[v] + maxLimitPerDirection[v]*3
+		composite[v] = dirFreeSpace[v] + maxLimitPerDirection[v]*3 - mostCenterMoves[v]*100
 	}
 	sort.SliceStable(keys, func(i, j int) bool {
 		return composite[keys[i]] > composite[keys[j]]
