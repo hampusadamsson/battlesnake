@@ -163,6 +163,15 @@ func (s *Snake) findOpenSpace(c Coord, depth int) (string, map[string]int) {
 	return keys[0], m
 }
 
+func (s *Snake) youHaveMostLife() bool {
+	for i := range s.State.Board.Snakes {
+		if !s.State.Board.Snakes[i].IsYou && len(s.State.Board.Snakes[i].Body) >= len(s.State.You.Body) {
+			return false
+		}
+	}
+	return true
+}
+
 func (s *Snake) GetAction() string {
 	you := s.State.You
 
@@ -183,17 +192,17 @@ func (s *Snake) GetAction() string {
 	eatMove := s.findFood()
 
 	// Find best direction
-	safeMove, dirFreeSpace := s.findOpenSpace(s.State.You.Head, 5)
+	safeMove, dirFreeSpace := s.findOpenSpace(s.State.You.Head, 7)
 
 	// Find best destruction move
-	limitingMove, limitingFactor, maxLimitPerDirection := s.findMostLimitingMove(s.State.You.Head, 7)
-	fmt.Println("DESTRUCTION:", limitingMove, limitingFactor)
+	_, _, maxLimitPerDirection := s.findMostLimitingMove(s.State.You.Head, 7)
+	// fmt.Println("DESTRUCTION:", limitingMove, limitingFactor)
 
 	// Prioritize movement
 	keys := []string{"left", "right", "up", "down"}
 	composite := make(map[string]int)
 	for _, v := range keys {
-		composite[v] = dirFreeSpace[v] + maxLimitPerDirection[v]*2
+		composite[v] = dirFreeSpace[v] + maxLimitPerDirection[v]*3
 	}
 	sort.SliceStable(keys, func(i, j int) bool {
 		return composite[keys[i]] > composite[keys[j]]
@@ -208,6 +217,8 @@ func (s *Snake) GetAction() string {
 	if eatMove != "" {
 		if s.State.You.Health < 10 {
 			s.PreferedMove = eatMove
+		} else if !s.youHaveMostLife() && dirFreeSpace[eatMove] > 10 {
+			s.PreferedMove = eatMove
 		} else if s.State.You.Health < 75 && dirFreeSpace[eatMove] > 75 {
 			s.PreferedMove = eatMove
 		} else if s.State.You.Health < 50 && dirFreeSpace[eatMove] > 50 {
@@ -219,7 +230,7 @@ func (s *Snake) GetAction() string {
 		} else if s.State.You.Health < 10 && dirFreeSpace[eatMove] > 10 {
 			s.PreferedMove = eatMove
 			// } else if limitingMove != "" && dirFreeSpace[limitingMove] > 10 && limitingFactor > (dirFreeSpace[limitingMove]*2) {
-		} else if dirFreeSpace[keys[0]] > 10 {
+		} else if dirFreeSpace[keys[0]] > 20 {
 			s.PreferedMove = keys[0]
 		} else {
 			// if limitingMove != "" && dirFreeSpace[limitingMove] > 10 { // && (limitingFactor > dirFreeSpace[limitingMove]) {
@@ -229,6 +240,8 @@ func (s *Snake) GetAction() string {
 			// }
 			// s.PreferedMove = safeMove
 		}
+	} else if dirFreeSpace[keys[0]] > 10 {
+		s.PreferedMove = keys[0]
 	} else {
 		s.PreferedMove = safeMove
 	}

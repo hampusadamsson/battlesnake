@@ -70,13 +70,13 @@ func (b *Board) isOckupied(c Coord) bool {
 			return true
 		}
 
-		// AVOID OTHERS
-		if !b.Snakes[i].IsYou {
-			expectedCoord := b.Snakes[i].expectedSnakeNextMove()
-			if expectedCoord.X == c.X && expectedCoord.Y == c.Y { // TODO - if you are bigger its ok
-				return true
-			}
-		}
+		// // AVOID OTHERS
+		// if !b.Snakes[i].IsYou {
+		// 	expectedCoord := b.Snakes[i].expectedSnakeNextMove()
+		// 	if expectedCoord.X == c.X && expectedCoord.Y == c.Y { // TODO - if you are bigger its ok
+		// 		return true
+		// 	}
+		// }
 	}
 	return false
 }
