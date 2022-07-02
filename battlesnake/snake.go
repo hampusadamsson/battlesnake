@@ -17,6 +17,15 @@ func SnakeNew(state GameState) Snake {
 	return s
 }
 
+// type Direction string
+
+// const (
+// 	up    Direction = "up"
+// 	Down  Direction = "down"
+// 	Left  Direction = "left"
+// 	Right Direction = "right"
+// )
+
 type Snake struct {
 	State        GameState
 	PreferedMove string
@@ -25,62 +34,6 @@ type Snake struct {
 	Left         bool
 	Right        bool
 }
-
-// func (s *Snake) avoidCollisionWithSelf() {
-// 	myNeck := s.State.You.Body[1] // Coordinates of body piece directly behind your head (your "neck")
-// 	myHead := s.State.You.Body[0] // Coordinates of your head
-// 	if myNeck.X < myHead.X {
-// 		s.Left = false
-// 	} else if myNeck.X > myHead.X {
-// 		s.Right = false
-// 	} else if myNeck.Y < myHead.Y {
-// 		s.Down = false
-// 	} else if myNeck.Y > myHead.Y {
-// 		s.Up = false
-// 	}
-// }
-
-// func (s *Snake) avoidWalls() {
-// 	boardWidth := s.State.Board.Width
-// 	boardHeight := s.State.Board.Height
-// 	myHead := s.State.You.Body[0] // Coordinates of your head
-// 	if myHead.X == 0 {
-// 		s.Left = false
-// 	} else if myHead.X == boardWidth-1 {
-// 		s.Right = false
-// 	}
-
-// 	if myHead.Y == 0 {
-// 		s.Down = false
-// 	} else if myHead.Y == boardHeight-1 {
-// 		s.Up = false
-// 	}
-// }
-
-// func (s *Snake) avoidBody(mybody []Coord) {
-// 	myHead := s.State.You.Body[0]
-// 	for i := range mybody {
-// 		if mybody[i].X == myHead.X+1 && mybody[i].Y == myHead.Y {
-// 			s.Right = false
-// 		}
-// 		if mybody[i].X == myHead.X-1 && mybody[i].Y == myHead.Y {
-// 			s.Left = false
-// 		}
-// 		if mybody[i].X == myHead.X && mybody[i].Y == myHead.Y+1 {
-// 			s.Up = false
-// 		}
-// 		if mybody[i].X == myHead.X && mybody[i].Y == myHead.Y-1 {
-// 			s.Down = false
-// 		}
-// 	}
-// }
-
-// func (s *Snake) avoidSnakes() {
-// 	for _, sn := range s.State.Board.Snakes {
-// 		snake := sn.Body
-// 		s.avoidBody(snake)
-// 	}
-// }
 
 func (s *Snake) findFood() string {
 	myHead := s.State.You.Body[0]
@@ -106,8 +59,8 @@ func (s *Snake) findFood() string {
 	}
 	return ""
 }
-func (s *Snake) possibleFutureMoves(c Coord, depth int) int {
-	if s.State.Board.isOckupied(c) {
+func (s *Snake) possibleFutureMoves(c Coord, depth int, blockedCoord *Coord) int {
+	if s.State.Board.isOckupied(c) || (blockedCoord != nil && c.X == blockedCoord.X && c.Y == blockedCoord.Y) {
 		return 0
 	}
 	if depth < 0 {
@@ -117,20 +70,75 @@ func (s *Snake) possibleFutureMoves(c Coord, depth int) int {
 	adjacent := c.adjacent()
 	for i := range adjacent {
 		if !s.State.Board.isOckupied(adjacent[i]) {
-			cc += s.possibleFutureMoves(adjacent[i], depth-1)
+			cc += s.possibleFutureMoves(adjacent[i], depth-1, blockedCoord)
 		}
 	}
 	return cc
 }
 
-func (s *Snake) findOpenSpace(depth int) (string, map[string]int) {
-	c := s.State.You.Head
+func (s *Snake) findMostLimitingMove(head Coord, lookahead int) (string, int) {
+	bestDirection := ""
+	limitingFactor := 0
 
+	for i := range s.State.Board.Snakes {
+		snek := s.State.Board.Snakes[i]
+		if !snek.IsYou {
+			//left
+			if !s.State.Board.isOckupied(head.left()) {
+				blockedCoord := head.left()
+				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
+				if limitingFactor < newLimitingFactor {
+					bestDirection = "left"
+					limitingFactor = newLimitingFactor
+				}
+			}
+			//right
+			if !s.State.Board.isOckupied(head.righ()) {
+				blockedCoord := head.righ()
+				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
+				if limitingFactor < newLimitingFactor {
+					bestDirection = "right"
+					limitingFactor = newLimitingFactor
+				}
+			}
+			//up
+			if !s.State.Board.isOckupied(head.up()) {
+				blockedCoord := head.up()
+				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
+				if limitingFactor < newLimitingFactor {
+					bestDirection = "up"
+					limitingFactor = newLimitingFactor
+				}
+			}
+			//down
+			if !s.State.Board.isOckupied(head.down()) {
+				blockedCoord := head.down()
+				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
+				if limitingFactor < newLimitingFactor {
+					bestDirection = "down"
+					limitingFactor = newLimitingFactor
+				}
+			}
+
+		}
+	}
+	return bestDirection, limitingFactor
+}
+
+func (s *Snake) blockingEffect(targetHead Coord, depthLookahead int, blockedCoord *Coord) int {
+	l := s.possibleFutureMoves(targetHead.left(), depthLookahead, blockedCoord)
+	r := s.possibleFutureMoves(targetHead.righ(), depthLookahead, blockedCoord)
+	u := s.possibleFutureMoves(targetHead.up(), depthLookahead, blockedCoord)
+	d := s.possibleFutureMoves(targetHead.down(), depthLookahead, blockedCoord)
+	return l + r + d + u
+}
+
+func (s *Snake) findOpenSpace(c Coord, depth int) (string, map[string]int) {
 	m := make(map[string]int)
-	m["left"] = s.possibleFutureMoves(c.left(), depth)
-	m["right"] = s.possibleFutureMoves(c.righ(), depth)
-	m["up"] = s.possibleFutureMoves(c.up(), depth)
-	m["down"] = s.possibleFutureMoves(c.down(), depth)
+	m["left"] = s.possibleFutureMoves(c.left(), depth, nil)
+	m["right"] = s.possibleFutureMoves(c.righ(), depth, nil)
+	m["up"] = s.possibleFutureMoves(c.up(), depth, nil)
+	m["down"] = s.possibleFutureMoves(c.down(), depth, nil)
 
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -146,7 +154,6 @@ func (s *Snake) findOpenSpace(depth int) (string, map[string]int) {
 }
 
 func (s *Snake) GetAction() string {
-
 	you := s.State.You
 
 	if s.State.Board.isOckupied(you.Head.left()) {
@@ -162,41 +169,48 @@ func (s *Snake) GetAction() string {
 		s.Up = false
 	}
 
-	// // Step 0: Don't let your Battlesnake move back in on it's own neck
-	// s.avoidCollisionWithSelf()
-
-	// // TODO: Step 1 - Don't hit walls.
-	// // Use information in GameState to prevent your Battlesnake from moving beyond the boundaries of the board.
-	// s.avoidWalls()
-
-	// // TODO: Step 2 - Don't hit yourself.
-	// // Use information in GameState to prevent your Battlesnake from colliding with itself.
-	// s.avoidBody(s.State.You.Body)
-
-	// // TODO: Step 3 - Don't collide with others.
-	// // Use information in GameState to prevent your Battlesnake from colliding with others.
-	// s.avoidSnakes()
-
-	// TODO: Step 4 - Find food.
-	// Use information in GameState to seek out and find food.
+	// Find food.
 	eatMove := s.findFood()
-	safeMove, dirFreeSpace := s.findOpenSpace(7)
+
+	// Find best direction
+	safeMove, dirFreeSpace := s.findOpenSpace(s.State.You.Head, 5)
+
+	// Find best destruction move
+	// limitingMove, limitingFactor := s.findMostLimitingMove(s.State.You.Head, 5)
+	// fmt.Println("DESTRUCTION:", limitingMove, limitingFactor)
+
+	// Prioritize movement
+	// 1) survival
+	// 1.1) health
+	// 1.2) free space
+	// 2) attacking
 
 	if eatMove != "" {
-		if s.State.You.Health < 40 && dirFreeSpace[eatMove] > 20 {
+		if s.State.You.Health < 75 && dirFreeSpace[eatMove] > 75 {
+			s.PreferedMove = eatMove
+		} else if s.State.You.Health < 50 && dirFreeSpace[eatMove] > 50 {
+			s.PreferedMove = eatMove
+		} else if s.State.You.Health < 30 && dirFreeSpace[eatMove] > 30 {
+			s.PreferedMove = eatMove
+		} else if s.State.You.Health < 20 && dirFreeSpace[eatMove] > 20 {
+			s.PreferedMove = eatMove
+		} else if s.State.You.Health < 10 && dirFreeSpace[eatMove] > 10 {
+			s.PreferedMove = eatMove
+		} else if s.State.You.Health < 8 {
 			s.PreferedMove = eatMove
 		} else {
+			// if limitingMove != "" && (limitingFactor > dirFreeSpace[limitingMove]) {
+			// 	s.PreferedMove = limitingMove
+			// } else {
+			// 	s.PreferedMove = safeMove
+			// }
 			s.PreferedMove = safeMove
 		}
 	} else {
 		s.PreferedMove = safeMove
 	}
-	// fmt.Println(s.PreferedMove)
 
-	// Finally, choose a move from the available safe moves.
-	// TODO: Step 5 - Select a move to make based on strategy, rather than random.
-
-	// fmt.Println("PREF", s.PreferedMove)
+	// Act on movement
 	if s.PreferedMove == "" {
 		if s.Down {
 			s.PreferedMove = "down"
@@ -207,7 +221,6 @@ func (s *Snake) GetAction() string {
 		} else if s.Right {
 			s.PreferedMove = "right"
 		}
-		// fmt.Println(s.Left, s.Right, s.Down, s.Up, s.PreferedMove)
 	}
 	return s.PreferedMove
 }
