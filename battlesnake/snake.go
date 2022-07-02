@@ -76,9 +76,15 @@ func (s *Snake) possibleFutureMoves(c Coord, depth int, blockedCoord *Coord) int
 	return cc
 }
 
-func (s *Snake) findMostLimitingMove(head Coord, lookahead int) (string, int) {
+func (s *Snake) findMostLimitingMove(head Coord, lookahead int) (string, int, map[string]int) {
 	bestDirection := ""
 	limitingFactor := 0
+
+	m := make(map[string]int)
+	m["left"] = 0
+	m["right"] = 0
+	m["up"] = 0
+	m["down"] = 0
 
 	for i := range s.State.Board.Snakes {
 		snek := s.State.Board.Snakes[i]
@@ -90,6 +96,7 @@ func (s *Snake) findMostLimitingMove(head Coord, lookahead int) (string, int) {
 				if limitingFactor < newLimitingFactor {
 					bestDirection = "left"
 					limitingFactor = newLimitingFactor
+					m["left"] = limitingFactor
 				}
 			}
 			//right
@@ -99,6 +106,7 @@ func (s *Snake) findMostLimitingMove(head Coord, lookahead int) (string, int) {
 				if limitingFactor < newLimitingFactor {
 					bestDirection = "right"
 					limitingFactor = newLimitingFactor
+					m["right"] = limitingFactor
 				}
 			}
 			//up
@@ -108,6 +116,7 @@ func (s *Snake) findMostLimitingMove(head Coord, lookahead int) (string, int) {
 				if limitingFactor < newLimitingFactor {
 					bestDirection = "up"
 					limitingFactor = newLimitingFactor
+					m["up"] = limitingFactor
 				}
 			}
 			//down
@@ -117,12 +126,13 @@ func (s *Snake) findMostLimitingMove(head Coord, lookahead int) (string, int) {
 				if limitingFactor < newLimitingFactor {
 					bestDirection = "down"
 					limitingFactor = newLimitingFactor
+					m["down"] = limitingFactor
 				}
 			}
 
 		}
 	}
-	return bestDirection, limitingFactor
+	return bestDirection, limitingFactor, m
 }
 
 func (s *Snake) blockingEffect(targetHead Coord, depthLookahead int, blockedCoord *Coord) int {
@@ -176,17 +186,29 @@ func (s *Snake) GetAction() string {
 	safeMove, dirFreeSpace := s.findOpenSpace(s.State.You.Head, 5)
 
 	// Find best destruction move
-	// limitingMove, limitingFactor := s.findMostLimitingMove(s.State.You.Head, 5)
-	// fmt.Println("DESTRUCTION:", limitingMove, limitingFactor)
+	limitingMove, limitingFactor, maxLimitPerDirection := s.findMostLimitingMove(s.State.You.Head, 7)
+	fmt.Println("DESTRUCTION:", limitingMove, limitingFactor)
 
 	// Prioritize movement
+	keys := []string{"left", "right", "up", "down"}
+	composite := make(map[string]int)
+	for _, v := range keys {
+		composite[v] = dirFreeSpace[v] + maxLimitPerDirection[v]*2
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		return composite[keys[i]] > composite[keys[j]]
+	})
+	fmt.Println("REC:", keys[0], composite)
+
 	// 1) survival
 	// 1.1) health
 	// 1.2) free space
 	// 2) attacking
 
 	if eatMove != "" {
-		if s.State.You.Health < 75 && dirFreeSpace[eatMove] > 75 {
+		if s.State.You.Health < 10 {
+			s.PreferedMove = eatMove
+		} else if s.State.You.Health < 75 && dirFreeSpace[eatMove] > 75 {
 			s.PreferedMove = eatMove
 		} else if s.State.You.Health < 50 && dirFreeSpace[eatMove] > 50 {
 			s.PreferedMove = eatMove
@@ -196,15 +218,16 @@ func (s *Snake) GetAction() string {
 			s.PreferedMove = eatMove
 		} else if s.State.You.Health < 10 && dirFreeSpace[eatMove] > 10 {
 			s.PreferedMove = eatMove
-		} else if s.State.You.Health < 8 {
-			s.PreferedMove = eatMove
+			// } else if limitingMove != "" && dirFreeSpace[limitingMove] > 10 && limitingFactor > (dirFreeSpace[limitingMove]*2) {
+		} else if dirFreeSpace[keys[0]] > 10 {
+			s.PreferedMove = keys[0]
 		} else {
-			// if limitingMove != "" && (limitingFactor > dirFreeSpace[limitingMove]) {
+			// if limitingMove != "" && dirFreeSpace[limitingMove] > 10 { // && (limitingFactor > dirFreeSpace[limitingMove]) {
 			// 	s.PreferedMove = limitingMove
 			// } else {
-			// 	s.PreferedMove = safeMove
-			// }
 			s.PreferedMove = safeMove
+			// }
+			// s.PreferedMove = safeMove
 		}
 	} else {
 		s.PreferedMove = safeMove
