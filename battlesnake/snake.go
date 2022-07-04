@@ -35,12 +35,38 @@ type Snake struct {
 	Right        bool
 }
 
+func (s *Snake) aggDistanceFromOthersToCoord(c Coord) int {
+	penalty := 0
+	for i := range s.State.Board.Snakes {
+		snek := s.State.Board.Snakes[i]
+		if !snek.IsYou {
+			penalty += manhatanDistanceBetween(snek.Head, c)
+		}
+	}
+	return penalty
+}
+
+func (s *Snake) distanceToNearestEnemy(c Coord) int {
+	currentNearest := 9999999
+	for i := range s.State.Board.Snakes {
+		snek := s.State.Board.Snakes[i]
+		if !snek.IsYou {
+			dist := manhatanDistanceBetween(snek.Head, c)
+			if dist < currentNearest {
+				currentNearest = dist
+			}
+		}
+	}
+	return currentNearest
+}
+
 func (s *Snake) findFood() string {
 	myHead := s.State.You.Body[0]
 	var nearestFood Coord
 	distance := 999999
 	for _, c := range s.State.Board.Food {
 		dist := manhatanDistanceBetween(myHead, c)
+		dist -= s.aggDistanceFromOthersToCoord(c)
 		if dist < distance {
 			nearestFood = c
 			distance = dist
@@ -59,9 +85,14 @@ func (s *Snake) findFood() string {
 	}
 	return ""
 }
-func (s *Snake) possibleFutureMoves(c Coord, depth int, blockedCoord *Coord) int {
+func (s *Snake) possibleFutureMoves(c Coord, depth int, blockedCoord *Coord, hist map[Coord]int) int {
 	if s.State.Board.isOckupied(c) || (blockedCoord != nil && c.X == blockedCoord.X && c.Y == blockedCoord.Y) {
 		return 0
+	}
+	if _, ok := hist[c]; ok {
+		return 0
+	} else {
+		hist[c] = 1
 	}
 	if depth < 0 {
 		return 1
@@ -70,85 +101,74 @@ func (s *Snake) possibleFutureMoves(c Coord, depth int, blockedCoord *Coord) int
 	adjacent := c.adjacent()
 	for i := range adjacent {
 		if !s.State.Board.isOckupied(adjacent[i]) {
-			cc += s.possibleFutureMoves(adjacent[i], depth-1, blockedCoord)
+			cc += s.possibleFutureMoves(adjacent[i], depth-1, blockedCoord, hist)
 		}
 	}
-	return cc
+	return cc + 1
 }
 
-func (s *Snake) findMostLimitingMove(head Coord, lookahead int) (string, int, map[string]int) {
-	bestDirection := ""
-	limitingFactor := 0
+func (s *Snake) helper(snek *Battlesnake, lookahead int, blockedCoord Coord, dir string, m map[string]int, possiblePathCount map[string]int) {
+	be := s.countOpenPaths(snek.Head, lookahead, &blockedCoord)
+	newLimitingFactor := s.countOpenPaths(snek.Head, lookahead, nil) - be
+	if m[dir] < newLimitingFactor {
+		m[dir] = newLimitingFactor
+		possiblePathCount[dir] = be
+	}
+}
 
-	m := make(map[string]int)
-	m["left"] = 0
-	m["right"] = 0
-	m["up"] = 0
-	m["down"] = 0
-
+func (s *Snake) findMostLimitingMove(head Coord, lookahead int) (map[string]int, map[string]int, []string) {
+	limitingFactorMap := make(map[string]int)
+	possiblePathCount := make(map[string]int)
+	limitingFactorMap["left"] = 0
+	limitingFactorMap["right"] = 0
+	limitingFactorMap["up"] = 0
+	limitingFactorMap["down"] = 0
+	possiblePathCount["left"] = 9999
+	possiblePathCount["right"] = 9999
+	possiblePathCount["up"] = 9999
+	possiblePathCount["down"] = 9999
 	for i := range s.State.Board.Snakes {
 		snek := s.State.Board.Snakes[i]
 		if !snek.IsYou {
 			//left
 			if !s.State.Board.isOckupied(head.left()) {
-				blockedCoord := head.left()
-				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
-				if limitingFactor < newLimitingFactor {
-					bestDirection = "left"
-					limitingFactor = newLimitingFactor
-					m["left"] = limitingFactor
-				}
+				s.helper(&snek, lookahead, head.left(), "left", limitingFactorMap, possiblePathCount)
 			}
 			//right
 			if !s.State.Board.isOckupied(head.righ()) {
-				blockedCoord := head.righ()
-				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
-				if limitingFactor < newLimitingFactor {
-					bestDirection = "right"
-					limitingFactor = newLimitingFactor
-					m["right"] = limitingFactor
-				}
+				s.helper(&snek, lookahead, head.righ(), "right", limitingFactorMap, possiblePathCount)
 			}
 			//up
 			if !s.State.Board.isOckupied(head.up()) {
-				blockedCoord := head.up()
-				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
-				if limitingFactor < newLimitingFactor {
-					bestDirection = "up"
-					limitingFactor = newLimitingFactor
-					m["up"] = limitingFactor
-				}
+				s.helper(&snek, lookahead, head.up(), "up", limitingFactorMap, possiblePathCount)
 			}
 			//down
 			if !s.State.Board.isOckupied(head.down()) {
-				blockedCoord := head.down()
-				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
-				if limitingFactor < newLimitingFactor {
-					bestDirection = "down"
-					limitingFactor = newLimitingFactor
-					m["down"] = limitingFactor
-				}
+				s.helper(&snek, lookahead, head.down(), "down", limitingFactorMap, possiblePathCount)
 			}
-
 		}
 	}
-	return bestDirection, limitingFactor, m
+	keys := []string{"left", "right", "up", "down"}
+	sort.SliceStable(keys, func(i, j int) bool {
+		return limitingFactorMap[keys[i]] > limitingFactorMap[keys[j]]
+	})
+	return limitingFactorMap, possiblePathCount, keys
 }
 
-func (s *Snake) blockingEffect(targetHead Coord, depthLookahead int, blockedCoord *Coord) int {
-	l := s.possibleFutureMoves(targetHead.left(), depthLookahead, blockedCoord)
-	r := s.possibleFutureMoves(targetHead.righ(), depthLookahead, blockedCoord)
-	u := s.possibleFutureMoves(targetHead.up(), depthLookahead, blockedCoord)
-	d := s.possibleFutureMoves(targetHead.down(), depthLookahead, blockedCoord)
+func (s *Snake) countOpenPaths(targetHead Coord, depthLookahead int, blockedCoord *Coord) int {
+	l := s.possibleFutureMoves(targetHead.left(), depthLookahead, blockedCoord, make(map[Coord]int))
+	r := s.possibleFutureMoves(targetHead.righ(), depthLookahead, blockedCoord, make(map[Coord]int))
+	u := s.possibleFutureMoves(targetHead.up(), depthLookahead, blockedCoord, make(map[Coord]int))
+	d := s.possibleFutureMoves(targetHead.down(), depthLookahead, blockedCoord, make(map[Coord]int))
 	return l + r + d + u
 }
 
 func (s *Snake) findOpenSpace(c Coord, depth int) (string, map[string]int) {
 	m := make(map[string]int)
-	m["left"] = s.possibleFutureMoves(c.left(), depth, nil)
-	m["right"] = s.possibleFutureMoves(c.righ(), depth, nil)
-	m["up"] = s.possibleFutureMoves(c.up(), depth, nil)
-	m["down"] = s.possibleFutureMoves(c.down(), depth, nil)
+	m["left"] = s.possibleFutureMoves(c.left(), depth, nil, make(map[Coord]int))
+	m["right"] = s.possibleFutureMoves(c.righ(), depth, nil, make(map[Coord]int))
+	m["up"] = s.possibleFutureMoves(c.up(), depth, nil, make(map[Coord]int))
+	m["down"] = s.possibleFutureMoves(c.down(), depth, nil, make(map[Coord]int))
 
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -207,14 +227,14 @@ func (s *Snake) GetAction() string {
 	mostCenterMoves := s.getMostCenteringMove()
 
 	// Find best destruction move
-	_, _, maxLimitPerDirection := s.findMostLimitingMove(s.State.You.Head, 7)
+	maxLimitPerDirection, totPathForEnemyInThatDir, paths := s.findMostLimitingMove(s.State.You.Head, 7)
 	// fmt.Println("DESTRUCTION:", limitingMove, limitingFactor)
 
 	// Prioritize movement
 	keys := []string{"left", "right", "up", "down"}
 	composite := make(map[string]int)
 	for _, v := range keys {
-		composite[v] = dirFreeSpace[v] + maxLimitPerDirection[v]*3 - mostCenterMoves[v]*100
+		composite[v] = dirFreeSpace[v] + maxLimitPerDirection[v] - mostCenterMoves[v]*3
 	}
 	sort.SliceStable(keys, func(i, j int) bool {
 		return composite[keys[i]] > composite[keys[j]]
@@ -226,25 +246,45 @@ func (s *Snake) GetAction() string {
 	// 1.2) free space
 	// 2) attacking
 
+	fmt.Println("-------------")
+	fmt.Println("REC:", keys[0])
+	fmt.Println("composite", composite)
+	fmt.Println("dirFreeSpace", dirFreeSpace)
+	fmt.Println("maxLimitPerDirection", maxLimitPerDirection)
+	fmt.Println("mostCenterMoves", mostCenterMoves)
+	fmt.Println("totPathForEnemyInThatDir", totPathForEnemyInThatDir)
+
 	if eatMove != "" {
 		if s.State.You.Health < 10 {
+			fmt.Println("--------HEAL")
 			s.PreferedMove = eatMove
-		} else if !s.youHaveMostLife() && dirFreeSpace[eatMove] > 10 {
+		} else if maxLimitPerDirection[paths[0]] < 3 && dirFreeSpace[paths[0]] > totPathForEnemyInThatDir[paths[0]] && s.distanceToNearestEnemy(s.State.You.Head) > 2 {
+			fmt.Println("--------KILLer000")
+			s.PreferedMove = paths[0]
+		} else if !s.youHaveMostLife() && dirFreeSpace[eatMove] > 5 && s.distanceToNearestEnemy(s.State.You.Head) > 2 {
+			fmt.Println("--------HEAL")
 			s.PreferedMove = eatMove
-		} else if s.State.You.Health < 75 && dirFreeSpace[eatMove] > 75 {
+		} else if s.State.You.Health < 75 && dirFreeSpace[eatMove] > 20 {
+			fmt.Println("--------HEAL")
 			s.PreferedMove = eatMove
-		} else if s.State.You.Health < 50 && dirFreeSpace[eatMove] > 50 {
+		} else if s.State.You.Health < 50 && dirFreeSpace[eatMove] > 15 {
+			fmt.Println("--------HEAL")
 			s.PreferedMove = eatMove
-		} else if s.State.You.Health < 30 && dirFreeSpace[eatMove] > 30 {
+		} else if s.State.You.Health < 30 && dirFreeSpace[eatMove] > 10 {
+			fmt.Println("--------HEAL")
 			s.PreferedMove = eatMove
-		} else if s.State.You.Health < 20 && dirFreeSpace[eatMove] > 20 {
+		} else if s.State.You.Health < 20 && dirFreeSpace[eatMove] > 8 {
+			fmt.Println("--------HEAL")
 			s.PreferedMove = eatMove
-		} else if s.State.You.Health < 10 && dirFreeSpace[eatMove] > 10 {
+		} else if s.State.You.Health < 10 && dirFreeSpace[eatMove] > 5 {
+			fmt.Println("--------HEAL")
 			s.PreferedMove = eatMove
 			// } else if limitingMove != "" && dirFreeSpace[limitingMove] > 10 && limitingFactor > (dirFreeSpace[limitingMove]*2) {
-		} else if dirFreeSpace[keys[0]] > 20 {
+		} else if dirFreeSpace[keys[0]] > 5 {
+			fmt.Println("--------DEFAULT 1")
 			s.PreferedMove = keys[0]
 		} else {
+			fmt.Println("--------DEFAULT 2")
 			// if limitingMove != "" && dirFreeSpace[limitingMove] > 10 { // && (limitingFactor > dirFreeSpace[limitingMove]) {
 			// 	s.PreferedMove = limitingMove
 			// } else {
@@ -253,8 +293,10 @@ func (s *Snake) GetAction() string {
 			// s.PreferedMove = safeMove
 		}
 	} else if dirFreeSpace[keys[0]] > 10 {
+		fmt.Println("--------DEFAULT 3")
 		s.PreferedMove = keys[0]
 	} else {
+		fmt.Println("--------DEFAULT 4")
 		s.PreferedMove = safeMove
 	}
 

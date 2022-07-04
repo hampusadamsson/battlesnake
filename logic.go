@@ -21,7 +21,7 @@ func info() BattlesnakeInfoResponse {
 	return BattlesnakeInfoResponse{
 		APIVersion: "1",
 		Author:     "Majestic cat",
-		Color:      "#9F2B68",
+		Color:      "#00000", //"#9F2B68",
 		Head:       "all-seeing",
 		Tail:       "bonhomme",
 	}
