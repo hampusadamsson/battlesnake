@@ -45,6 +45,8 @@ type Board struct {
 	Snakes []Battlesnake `json:"snakes"`
 	// Used in non-standard game modes
 	Hazards []Coord `json:"hazards"`
+	// custom
+	Penalties map[Coord]int
 }
 
 func (b *Board) isOckupied(c Coord) bool {
@@ -79,6 +81,46 @@ func (b *Board) isOckupied(c Coord) bool {
 		// }
 	}
 	return false
+}
+
+func (b *Board) getPenalties(c Coord) *decision {
+	pen := makeDecision()
+
+	adj := c.down()
+	if p, ok := b.Penalties[adj]; ok {
+		pen.set("down", p)
+	}
+	adj = c.left()
+	if p, ok := b.Penalties[adj]; ok {
+		pen.set("left", p)
+	}
+	adj = c.righ()
+	if p, ok := b.Penalties[adj]; ok {
+		pen.set("right", p)
+	}
+	adj = c.up()
+	if p, ok := b.Penalties[adj]; ok {
+		pen.set("up", p)
+	}
+
+	return pen
+}
+
+func (b *Board) createImpossibleMoves(c Coord) *decision {
+	impossibleMoves := makeDecision()
+	if b.isOckupied(c.left()) {
+		impossibleMoves.set("left", -10000)
+	}
+	if b.isOckupied(c.righ()) {
+		impossibleMoves.set("right", -10000)
+	}
+	if b.isOckupied(c.down()) {
+		impossibleMoves.set("down", -10000)
+	}
+	if b.isOckupied(c.up()) {
+		impossibleMoves.set("up", -10000)
+	}
+	return impossibleMoves
 }
 
 func (b *Board) findWayToFood(c *Coord) *Path {

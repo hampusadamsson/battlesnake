@@ -32,7 +32,7 @@ func TestTrap(t *testing.T) {
 			Snakes: []Battlesnake{me, foe},
 			Height: 12,
 			Width:  12,
-			Food:   []Coord{{8, 8}},
+			Food:   []Coord{{8, 8, 0}},
 		},
 		You: me,
 	}
@@ -64,34 +64,12 @@ func TestForcedMove(t *testing.T) {
 			Snakes: []Battlesnake{me, foe},
 			Height: 4,
 			Width:  4,
-			Food:   []Coord{{0, 1}},
+			Food:   []Coord{{0, 1, 0}},
 		},
 		You: me,
 	}
 	s := SnakeNew(state)
 	s.GetAction()
-	//assert.Equal(t, "down", s.GetAction())
-}
-
-func TestFood(t *testing.T) {
-	me := Battlesnake{
-		Head:   Coord{X: 3, Y: 2},
-		Health: 50,
-		Body: []Coord{
-			{X: 2, Y: 2}},
-	}
-	state := GameState{
-		Board: Board{
-			Snakes: []Battlesnake{me},
-			Height: 4,
-			Width:  4,
-			Food:   []Coord{{0, 0}},
-		},
-		You: me,
-	}
-	s := SnakeNew(state)
-	action := s.pathToNearbyFood()
-	fmt.Println(action)
 	//assert.Equal(t, "down", s.GetAction())
 }
 
@@ -113,7 +91,7 @@ func TestState(t *testing.T) {
 			Snakes: []Battlesnake{me, foe},
 			Height: 4,
 			Width:  4,
-			Food:   []Coord{{0, 0}},
+			Food:   []Coord{{0, 0, 0}},
 		},
 		You: me,
 	}
@@ -121,7 +99,7 @@ func TestState(t *testing.T) {
 
 	fmt.Println(s)
 	s2 := SnakeNew(state)
-	s2.State.Board.Hazards = append(s2.State.Board.Hazards, Coord{9, 9})
+	s2.State.Board.Hazards = append(s2.State.Board.Hazards, Coord{9, 9, 0})
 	fmt.Println(s)
 	fmt.Println(s2.State)
 }

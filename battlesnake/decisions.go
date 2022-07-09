@@ -37,12 +37,24 @@ func (d *decision) add(c2 *decision) {
 	}
 }
 
-func (d *decision) max() string {
+func (d *decision) sorted() []string {
 	keys := []string{"left", "right", "up", "down"}
 	sort.SliceStable(keys, func(i, j int) bool {
 		return d.path[keys[i]] > d.path[keys[j]]
 	})
-	return keys[0]
+	return keys
+}
+
+func (d *decision) max() string {
+	return d.sorted()[0]
+}
+
+func (d *decision) highest(count int) []string {
+	high := make([]string, 0)
+	for _, v := range d.sorted()[:count] {
+		high = append(high, v)
+	}
+	return high
 }
 
 func (d *decision) invert() *decision {

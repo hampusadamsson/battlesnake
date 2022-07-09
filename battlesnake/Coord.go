@@ -3,22 +3,24 @@ package battlesnake
 type Coord struct {
 	X int `json:"x"`
 	Y int `json:"y"`
+
+	Cost int
 }
 
 func (c *Coord) left() Coord {
-	return Coord{c.X - 1, c.Y}
+	return Coord{X: c.X - 1, Y: c.Y}
 }
 
 func (c *Coord) righ() Coord {
-	return Coord{c.X + 1, c.Y}
+	return Coord{X: c.X + 1, Y: c.Y}
 }
 
 func (c *Coord) up() Coord {
-	return Coord{c.X, c.Y + 1}
+	return Coord{X: c.X, Y: c.Y + 1}
 }
 
 func (c *Coord) down() Coord {
-	return Coord{c.X, c.Y - 1}
+	return Coord{X: c.X, Y: c.Y - 1}
 }
 
 func (c *Coord) adjacent() []Coord {
@@ -28,6 +30,19 @@ func (c *Coord) adjacent() []Coord {
 		c.left(),
 		c.righ(),
 	}
+}
+
+func (c *Coord) offset(dir string) Coord {
+	if dir == "down" {
+		return Coord{X: c.X, Y: c.Y - 1}
+	} else if dir == "up" {
+		return Coord{X: c.X, Y: c.Y + 1}
+	} else if dir == "left" {
+		return Coord{X: c.X - 1, Y: c.Y}
+	} else if dir == "right" {
+		return Coord{X: c.X + 1, Y: c.Y}
+	}
+	panic("Cant get heres")
 }
 
 func (c *Coord) manhatanDistanceBetween(to Coord) int {
@@ -49,4 +64,11 @@ func (c *Coord) findClosest(cs []Coord) Coord {
 		}
 	}
 	return closestCoord
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
