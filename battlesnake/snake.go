@@ -2,286 +2,125 @@ package battlesnake
 
 import (
 	"fmt"
-	"sort"
 )
 
-func SnakeNew(state GameState) Snake {
-	for i := range state.Board.Snakes {
-		s := state.Board.Snakes[i].Head
-		you := state.You.Head
-		if s == you {
-			state.Board.Snakes[i].IsYou = true
-		}
-	}
-	s := Snake{State: state, Up: true, Down: true, Left: true, Right: true}
+func SnakeNew(state GameState) Engine {
+	s := Engine{State: state}
 	return s
 }
 
-// type Direction string
-
-// const (
-// 	up    Direction = "up"
-// 	Down  Direction = "down"
-// 	Left  Direction = "left"
-// 	Right Direction = "right"
-// )
-
-type Snake struct {
+type Engine struct {
 	State        GameState
 	PreferedMove string
-	Up           bool
-	Down         bool
-	Left         bool
-	Right        bool
 }
 
-func (s *Snake) findFood() string {
-	myHead := s.State.You.Body[0]
-	var nearestFood Coord
-	distance := 999999
-	for _, c := range s.State.Board.Food {
-		dist := manhatanDistanceBetween(myHead, c)
-		if dist < distance {
-			nearestFood = c
-			distance = dist
-		}
-	}
-	if &nearestFood != nil {
-		if myHead.X < nearestFood.X && s.Right == true {
-			return "right"
-		} else if myHead.X > nearestFood.X && s.Left == true {
-			return "left"
-		} else if myHead.Y < nearestFood.Y && s.Up == true {
-			return "up"
-		} else if myHead.Y > nearestFood.Y && s.Down == true {
-			return "down"
-		}
-	}
-	return ""
-}
-func (s *Snake) possibleFutureMoves(c Coord, depth int, blockedCoord *Coord) int {
-	if s.State.Board.isOckupied(c) || (blockedCoord != nil && c.X == blockedCoord.X && c.Y == blockedCoord.Y) {
-		return 0
-	}
-	if depth < 0 {
-		return 1
-	}
-	cc := 0
-	adjacent := c.adjacent()
-	for i := range adjacent {
-		if !s.State.Board.isOckupied(adjacent[i]) {
-			cc += s.possibleFutureMoves(adjacent[i], depth-1, blockedCoord)
-		}
-	}
-	return cc
+func (s *Engine) findNearestFood() Coord {
+	c := s.State.You.Head
+	return c.findClosest(s.State.Board.Food)
 }
 
-func (s *Snake) findMostLimitingMove(head Coord, lookahead int) (string, int, map[string]int) {
-	bestDirection := ""
-	limitingFactor := 0
-
-	m := make(map[string]int)
-	m["left"] = 0
-	m["right"] = 0
-	m["up"] = 0
-	m["down"] = 0
+// GetAction retrieves the action for the snake
+func (s *Engine) GetAction() string {
+	s.State.Board.Penalties = make(map[Coord]int)
+	myHead := s.State.You.Head
+	var youHaveMostHealth bool
+	var myID int
+	for i := range s.State.Board.Snakes {
+		if s.State.Board.Snakes[i].Head == myHead {
+			myID = i
+			youHaveMostHealth = s.State.Board.Snakes[i].hasMostHealth(s.State.Board.Snakes)
+		}
+	}
 
 	for i := range s.State.Board.Snakes {
-		snek := s.State.Board.Snakes[i]
-		if !snek.IsYou {
-			//left
-			if !s.State.Board.isOckupied(head.left()) {
-				blockedCoord := head.left()
-				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
-				if limitingFactor < newLimitingFactor {
-					bestDirection = "left"
-					limitingFactor = newLimitingFactor
-					m["left"] = limitingFactor
-				}
-			}
-			//right
-			if !s.State.Board.isOckupied(head.righ()) {
-				blockedCoord := head.righ()
-				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
-				if limitingFactor < newLimitingFactor {
-					bestDirection = "right"
-					limitingFactor = newLimitingFactor
-					m["right"] = limitingFactor
-				}
-			}
-			//up
-			if !s.State.Board.isOckupied(head.up()) {
-				blockedCoord := head.up()
-				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
-				if limitingFactor < newLimitingFactor {
-					bestDirection = "up"
-					limitingFactor = newLimitingFactor
-					m["up"] = limitingFactor
-				}
-			}
-			//down
-			if !s.State.Board.isOckupied(head.down()) {
-				blockedCoord := head.down()
-				newLimitingFactor := s.blockingEffect(snek.Head, lookahead, nil) - s.blockingEffect(snek.Head, lookahead, &blockedCoord)
-				if limitingFactor < newLimitingFactor {
-					bestDirection = "down"
-					limitingFactor = newLimitingFactor
-					m["down"] = limitingFactor
-				}
-			}
+		if myID != i {
+			fmt.Println("SNAKE: ", s.State.Board.Snakes[i].Head)
+			expectedAction, forExpectedPath, probabilityOfPaths := s.getActionForSnake(&s.State.Board.Snakes[i])
+			fmt.Println("EXPECTED ACTION: ", expectedAction, forExpectedPath)
 
+			// Introduce this into my plan
+			if len(s.State.Board.Snakes[myID].Body) > len(s.State.Board.Snakes[i].Body) && s.State.Board.Snakes[myID].Head.isNextTo(forExpectedPath) {
+			} else {
+				fmt.Println("Most probabel moves:", probabilityOfPaths.highest(2))
+				fmt.Println("Head", s.State.Board.Snakes[i].Head)
+				for _, dir := range probabilityOfPaths.highest(2) {
+					fmt.Println(">>>Head", s.State.Board.Snakes[i].Head, dir, s.State.Board.Snakes[i].Head.offset(dir))
+					c := s.State.Board.Snakes[i].Head.offset(dir)
+					//s.State.Board.Hazards = append(s.State.Board.Hazards, c)
+					if youHaveMostHealth {
+						s.State.Board.Penalties[c] = 50
+					} else {
+						s.State.Board.Penalties[c] = 100
+					}
+					fmt.Println("Is now danger:", c)
+				}
+
+				// s.State.Board.Hazards = append(s.State.Board.Hazards, s.State.Board.Snakes[i].Head)
+				// s.State.Board.Snakes[i].Head = forExpectedPath
+			}
 		}
 	}
-	return bestDirection, limitingFactor, m
+
+	fmt.Println("---START---")
+	action, kk, _ := s.getActionForSnake(&s.State.Board.Snakes[myID])
+	fmt.Println(kk)
+	fmt.Println(&s.State.Board.Hazards)
+	fmt.Println("---END---")
+	return action
 }
 
-func (s *Snake) blockingEffect(targetHead Coord, depthLookahead int, blockedCoord *Coord) int {
-	l := s.possibleFutureMoves(targetHead.left(), depthLookahead, blockedCoord)
-	r := s.possibleFutureMoves(targetHead.righ(), depthLookahead, blockedCoord)
-	u := s.possibleFutureMoves(targetHead.up(), depthLookahead, blockedCoord)
-	d := s.possibleFutureMoves(targetHead.down(), depthLookahead, blockedCoord)
-	return l + r + d + u
-}
-
-func (s *Snake) findOpenSpace(c Coord, depth int) (string, map[string]int) {
-	m := make(map[string]int)
-	m["left"] = s.possibleFutureMoves(c.left(), depth, nil)
-	m["right"] = s.possibleFutureMoves(c.righ(), depth, nil)
-	m["up"] = s.possibleFutureMoves(c.up(), depth, nil)
-	m["down"] = s.possibleFutureMoves(c.down(), depth, nil)
-
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-
-	sort.SliceStable(keys, func(i, j int) bool {
-		return m[keys[i]] > m[keys[j]]
-	})
-
-	fmt.Println(c, keys[0], keys, m)
-	return keys[0], m
-}
-
-func (s *Snake) getMostCenteringMove() map[string]int {
-	m := make(map[string]int)
-	m["left"] = abs(s.State.You.Head.X - 1 - s.State.Board.Width)
-	m["right"] = abs(s.State.You.Head.X + 1 - s.State.Board.Width)
-	m["up"] = abs(s.State.You.Head.Y - 1 - s.State.Board.Height)
-	m["down"] = abs(s.State.You.Head.Y - 1 - s.State.Board.Height)
-	return m
-}
-
-func (s *Snake) youHaveMostLife() bool {
-	for i := range s.State.Board.Snakes {
-		if !s.State.Board.Snakes[i].IsYou && len(s.State.Board.Snakes[i].Body) >= len(s.State.You.Body) {
-			return false
-		}
-	}
-	return true
-}
-
-func (s *Snake) GetAction() string {
-	you := s.State.You
-
-	if s.State.Board.isOckupied(you.Head.left()) {
-		s.Left = false
-	}
-	if s.State.Board.isOckupied(you.Head.righ()) {
-		s.Right = false
-	}
-	if s.State.Board.isOckupied(you.Head.down()) {
-		s.Down = false
-	}
-	if s.State.Board.isOckupied(you.Head.up()) {
-		s.Up = false
-	}
-
-	// Find food.
-	eatMove := s.findFood()
+func (e *Engine) getActionForSnake(snake *Battlesnake) (string, Coord, *decision) {
+	// These moves can't be done
+	impossibleMoves := e.State.Board.createImpossibleMoves(snake.Head)
 
 	// Find best direction
-	safeMove, dirFreeSpace := s.findOpenSpace(s.State.You.Head, 7)
-
-	// strive for center
-	mostCenterMoves := s.getMostCenteringMove()
+	longFutureSpace := snake.findOpenSpace(snake.Head, 12, &e.State.Board)
 
 	// Find best destruction move
-	_, _, maxLimitPerDirection := s.findMostLimitingMove(s.State.You.Head, 7)
-	// fmt.Println("DESTRUCTION:", limitingMove, limitingFactor)
+	longFutureLimit := snake.findMostLimitingMove(e.State.Board.Snakes, 10, &e.State.Board)
 
-	// Prioritize movement
-	keys := []string{"left", "right", "up", "down"}
-	composite := make(map[string]int)
-	for _, v := range keys {
-		composite[v] = dirFreeSpace[v] + maxLimitPerDirection[v]*3 - mostCenterMoves[v]*100
-	}
-	sort.SliceStable(keys, func(i, j int) bool {
-		return composite[keys[i]] > composite[keys[j]]
-	})
-	fmt.Println("REC:", keys[0], composite)
+	// Add penalties
+	penalties := e.State.Board.getPenalties(snake.Head).invert()
 
-	// 1) survival
-	// 1.1) health
-	// 1.2) free space
-	// 2) attacking
-
-	if eatMove != "" {
-		if s.State.You.Health < 10 {
-			s.PreferedMove = eatMove
-		} else if !s.youHaveMostLife() && dirFreeSpace[eatMove] > 10 {
-			s.PreferedMove = eatMove
-		} else if s.State.You.Health < 75 && dirFreeSpace[eatMove] > 75 {
-			s.PreferedMove = eatMove
-		} else if s.State.You.Health < 50 && dirFreeSpace[eatMove] > 50 {
-			s.PreferedMove = eatMove
-		} else if s.State.You.Health < 30 && dirFreeSpace[eatMove] > 30 {
-			s.PreferedMove = eatMove
-		} else if s.State.You.Health < 20 && dirFreeSpace[eatMove] > 20 {
-			s.PreferedMove = eatMove
-		} else if s.State.You.Health < 10 && dirFreeSpace[eatMove] > 10 {
-			s.PreferedMove = eatMove
-			// } else if limitingMove != "" && dirFreeSpace[limitingMove] > 10 && limitingFactor > (dirFreeSpace[limitingMove]*2) {
-		} else if dirFreeSpace[keys[0]] > 20 {
-			s.PreferedMove = keys[0]
-		} else {
-			// if limitingMove != "" && dirFreeSpace[limitingMove] > 10 { // && (limitingFactor > dirFreeSpace[limitingMove]) {
-			// 	s.PreferedMove = limitingMove
-			// } else {
-			s.PreferedMove = safeMove
-			// }
-			// s.PreferedMove = safeMove
-		}
-	} else if dirFreeSpace[keys[0]] > 10 {
-		s.PreferedMove = keys[0]
-	} else {
-		s.PreferedMove = safeMove
+	// Add hungry move
+	hungryMove := makeDecision()
+	p := e.State.Board.findWayToFood(&snake.Head)
+	if p.valid {
+		hungryDirection, _ := p.getNextDirection()
+		hungryMove.set(hungryDirection, 30)
 	}
 
-	// Act on movement
-	if s.PreferedMove == "" {
-		if s.Down {
-			s.PreferedMove = "down"
-		} else if s.Up {
-			s.PreferedMove = "up"
-		} else if s.Left {
-			s.PreferedMove = "left"
-		} else if s.Right {
-			s.PreferedMove = "right"
-		}
+	// Prioritize and aggregate movement
+	composite := makeDecision()
+	composite.addAll(
+		hungryMove,
+		impossibleMoves,
+		longFutureSpace,
+		longFutureLimit,
+		penalties,
+	)
+
+	// Log
+	fmt.Println("-------------")
+	fmt.Println(snake.Head)
+	fmt.Println("REC:", composite.max())
+	fmt.Println("composite", composite)
+	fmt.Println("dirFreeSpace", longFutureSpace)
+	fmt.Println("maxLimitPerDirection", longFutureLimit)
+	fmt.Println("hungryMove", hungryMove)
+	fmt.Println("Penalties", penalties, e.State.Board.Penalties)
+
+	e.PreferedMove = composite.max()
+
+	switch e.PreferedMove {
+	case "left":
+		return e.PreferedMove, snake.Head.left(), composite
+	case "right":
+		return e.PreferedMove, snake.Head.righ(), composite
+	case "up":
+		return e.PreferedMove, snake.Head.up(), composite
+	case "down":
+		return e.PreferedMove, snake.Head.down(), composite
 	}
-	return s.PreferedMove
-}
-
-// ---------- HELPER FUNCTIONS -----------
-
-func manhatanDistanceBetween(from Coord, to Coord) int {
-	return abs(from.X-to.X) + abs(from.Y-to.Y)
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
+	panic("Can't get here")
 }
